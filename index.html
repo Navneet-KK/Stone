@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Number Modifier</title>
+</head>
+<body>
+    <h1>Current Number: <span id="currentNumber">0</span></h1>
+    <button id="incrementButton">Increment Number</button>
+
+    <script>
+        const numberDisplay = document.getElementById('currentNumber');
+        const incrementButton = document.getElementById('incrementButton');
+
+        // Function to fetch the current number
+        async function fetchNumber() {
+            const response = await fetch('/.netlify/functions/number');
+            const data = await response.json();
+            numberDisplay.textContent = data.number;
+        }
+
+        // Function to increment the number
+        async function incrementNumber() {
+            const response = await fetch('/.netlify/functions/number', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            const data = await response.json();
+            numberDisplay.textContent = data.number;
+        }
+
+        // Initial fetch
+        fetchNumber();
+
+        // Event listener for the button
+        incrementButton.addEventListener('click', incrementNumber);
+    </script>
+</body>
+</html>
