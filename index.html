@@ -3,18 +3,46 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Location Form</title>
+  <title>Submit Your Location</title>
+  <script>
+    // Function to get the user's location and fill the form
+    function getLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+          // Get latitude and longitude from the position object
+          const latitude = position.coords.latitude;
+          const longitude = position.coords.longitude;
+
+          // Fill the form fields with the coordinates
+          document.getElementById('latitude').value = latitude;
+          document.getElementById('longitude').value = longitude;
+        }, function(error) {
+          alert("Unable to retrieve your location. Please try again.");
+        });
+      } else {
+        alert("Geolocation is not supported by this browser.");
+      }
+    }
+  </script>
 </head>
-<body>
+<body onload="getLocation()">
   <h1>Submit Your Location</h1>
 
   <!-- Form with data-netlify attribute -->
   <form name="location-form" method="POST" data-netlify="true">
-    <label for="location">Enter Location:</label>
-    <input type="text" id="location" name="location" required>
+    <label for="latitude">Latitude:</label>
+    <input type="text" id="latitude" name="latitude" required readonly>
+
+    <br>
+
+    <label for="longitude">Longitude:</label>
+    <input type="text" id="longitude" name="longitude" required readonly>
+
+    <br>
+
     <button type="submit">Submit</button>
   </form>
 
-  <p>After submitting, you can view the data in the Netlify Dashboard under the Forms section.</p>
+  <p>Your location coordinates (latitude & longitude) will be filled automatically when you visit this page.</p>
 </body>
 </html>
