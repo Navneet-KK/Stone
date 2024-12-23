@@ -3,55 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Send and View Value</title>
+  <title>Location Form</title>
 </head>
 <body>
-  <h1>Send and View Value</h1>
+  <h1>Submit Your Location</h1>
 
-  <!-- Button to send a value -->
-  <button id="sendValueBtn">Send Value</button>
+  <!-- Form with data-netlify attribute -->
+  <form name="location-form" method="POST" data-netlify="true">
+    <label for="location">Enter Location:</label>
+    <input type="text" id="location" name="location" required>
+    <button type="submit">Submit</button>
+  </form>
 
-  <br><br>
-
-  <!-- Button to view the saved value -->
-  <button id="viewValueBtn">View Saved Value</button>
-
-  <p id="status"></p>
-  <p id="valueDisplay">Saved Value: <span id="savedValue">None</span></p>
-
-  <script>
-    // Send the value to the backend function
-    document.getElementById('sendValueBtn').addEventListener('click', function() {
-      const value = 5;  // You can change this to any value or input field
-      fetch('/.netlify/functions/save-value', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ value })
-      })
-      .then(response => response.json())
-      .then(data => {
-        document.getElementById('status').innerText = 'Value sent successfully!';
-      })
-      .catch(error => {
-        document.getElementById('status').innerText = 'Failed to send value.';
-        console.error('Error:', error);
-      });
-    });
-
-    // View the saved value from the backend function
-    document.getElementById('viewValueBtn').addEventListener('click', function() {
-      fetch('/.netlify/functions/view-value')
-        .then(response => response.json())
-        .then(data => {
-          document.getElementById('savedValue').innerText = data.value || 'No value set';
-        })
-        .catch(error => {
-          document.getElementById('status').innerText = 'Failed to fetch value.';
-          console.error('Error:', error);
-        });
-    });
-  </script>
+  <p>After submitting, you can view the data in the Netlify Dashboard under the Forms section.</p>
 </body>
 </html>
