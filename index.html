@@ -1,42 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Number Modifier</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Send and View Value</title>
 </head>
 <body>
-    <h1>Current Number: <span id="currentNumber">0</span></h1>
-    <button id="incrementButton">Increment Number</button>
+  <h1>Send and View Value</h1>
 
-    <script>
-        const numberDisplay = document.getElementById('currentNumber');
-        const incrementButton = document.getElementById('incrementButton');
+  <!-- Button to send a value -->
+  <button id="sendValueBtn">Send Value</button>
 
-        // Function to fetch the current number
-        async function fetchNumber() {
-            const response = await fetch('/.netlify/functions/number');
-            const data = await response.json();
-            numberDisplay.textContent = data.number;
-        }
+  <br><br>
 
-        // Function to increment the number
-        async function incrementNumber() {
-            const response = await fetch('/.netlify/functions/number', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-            const data = await response.json();
-            numberDisplay.textContent = data.number;
-        }
+  <!-- Button to view the saved value -->
+  <button id="viewValueBtn">View Saved Value</button>
 
-        // Initial fetch
-        fetchNumber();
+  <p id="status"></p>
+  <p id="valueDisplay">Saved Value: <span id="savedValue">None</span></p>
 
-        // Event listener for the button
-        incrementButton.addEventListener('click', incrementNumber);
-    </script>
+  <script>
+    // Send the value to the backend function
+    document.getElementById('sendValueBtn').addEventListener('click', function() {
+      const value = 5;  // You can change this to any value or input field
+      fetch('/.netlify/functions/save-value', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ value })
+      })
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById('status').innerText = 'Value sent successfully!';
+      })
+      .catch(error => {
+        document.getElementById('status').innerText = 'Failed to send value.';
+        console.error('Error:', error);
+      });
+    });
+
+    // View the saved value from the backend function
+    document.getElementById('viewValueBtn').addEventListener('click', function() {
+      fetch('/.netlify/functions/view-value')
+        .then(response => response.json())
+        .then(data => {
+          document.getElementById('savedValue').innerText = data.value || 'No value set';
+        })
+        .catch(error => {
+          document.getElementById('status').innerText = 'Failed to fetch value.';
+          console.error('Error:', error);
+        });
+    });
+  </script>
 </body>
 </html>
