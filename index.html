@@ -1,48 +1,98 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Submit Your Location</title>
-  <script>
-    // Function to get the user's location and fill the form
-    function getLocation() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function(position) {
-          // Get latitude and longitude from the position object
-          const latitude = position.coords.latitude;
-          const longitude = position.coords.longitude;
-
-          // Fill the form fields with the coordinates
-          document.getElementById('latitude').value = latitude;
-          document.getElementById('longitude').value = longitude;
-        }, function(error) {
-          alert("Unable to retrieve your location. Please try again.");
-        });
-      } else {
-        alert("Geolocation is not supported by this browser.");
-      }
-    }
-  </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebRTC Video Chat</title>
 </head>
-<body onload="getLocation()">
-  <h1>Submit Your Location</h1>
+<body>
+    <h2>WebRTC Video Chat</h2>
+    <video id="localVideo" autoplay playsinline></video>
+    <video id="remoteVideo" autoplay playsinline></video>
+    <button onclick="startCall()">Start Call</button>
 
-  <!-- Form with data-netlify attribute -->
-  <form name="location-form" method="POST" data-netlify="true">
-    <label for="latitude">Latitude:</label>
-    <input type="text" id="latitude" name="latitude" required readonly>
+    <script>
+        const localVideo = document.getElementById('localVideo');
+        const remoteVideo = document.getElementById('remoteVideo');
+        const ws = new WebSocket('ws://localhost:3000'); 
+        let peerConnection;
+        const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
-    <br>
+        async function startCall() {
+            console.log("Starting call...");
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            localVideo.srcObject = stream;
 
-    <label for="longitude">Longitude:</label>
-    <input type="text" id="longitude" name="longitude" required readonly>
+            peerConnection = new RTCPeerConnection(config);
+            stream.getTracks().forEach(track => peerConnection.addTrack(track, stream));
 
-    <br>
+            peerConnection.onicecandidate = event => {
+                if (event.candidate) {
+                    console.log("Sending ICE candidate:", event.candidate);
+                    ws.send(JSON.stringify({ type: 'candidate', candidate: event.candidate }));
+                }
+            };
 
-    <button type="submit">Submit</button>
-  </form>
+            peerConnection.ontrack = event => {
+                console.log("Receiving remote track...");
+                remoteVideo.srcObject = event.streams[0];
+            };
 
-  <p>Your location coordinates (latitude & longitude) will be filled automatically when you visit this page.</p>
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
+            console.log("Sending offer...");
+            ws.send(JSON.stringify({ type: 'offer', offer }));
+        }
+
+        ws.onmessage = async (event) => {
+    let data;
+    if (event.data instanceof Blob) {
+        let text = await event.data.text();
+        data = JSON.parse(text);
+    } else {
+        data = JSON.parse(event.data);
+    }
+    console.log("Message received:", data);
+
+    if (data.type === 'offer') {
+        console.log("Received offer, creating answer...");
+        peerConnection = new RTCPeerConnection(config);
+
+        peerConnection.onicecandidate = event => {
+            if (event.candidate) {
+                console.log("Sending ICE candidate:", event.candidate);
+                ws.send(JSON.stringify({ type: 'candidate', candidate: event.candidate }));
+            }
+        };
+
+        peerConnection.ontrack = event => {
+            console.log("Receiving remote track...");
+            remoteVideo.srcObject = event.streams[0];
+        };
+
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
+
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        stream.getTracks().forEach(track => peerConnection.addTrack(track, stream));
+        localVideo.srcObject = stream;
+
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+        console.log("Sending answer...");
+        ws.send(JSON.stringify({ type: 'answer', answer }));
+    }
+
+    if (data.type === 'answer') {
+        console.log("Received answer, setting remote description...");
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+    }
+
+    if (data.type === 'candidate' && data.candidate) {
+        console.log("Received ICE candidate, adding...");
+        await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+    }
+};
+
+    </script>
 </body>
 </html>
