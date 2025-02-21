@@ -1,3 +1,4 @@
+document.addEventListener("DOMContentLoaded", () => {
     const socket = new WebSocket("wss://elycheon.onrender.com"); // Connect to WebSocket server
 
     const chatBox = document.getElementById("chat-box");
@@ -58,3 +59,4 @@
             sendMessage(); // Call send function
         }
     });
+});    
