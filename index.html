@@ -1,12 +1,11 @@
 <!DOCTYPE html>
-<html lang="en"> 
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat App</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="chat.js"></script>
-    <script src="voiceCall.js"></script>
 </head>
 <body class="h-screen flex bg-gray-100">
 
@@ -14,7 +13,9 @@
     <div class="w-1/4 bg-blue-600 text-white flex flex-col p-4">
         <!-- Current User -->
         <div class="text-lg font-bold mb-4">
-            Connected: <span id="username">User123</span>
+            Connected: 
+            <span id="username">User123</span>
+            <span id="onlineStatus" class="text-gray-500">●</span>
         </div>
         <!-- Music Bot -->
         <div class="bg-blue-800 p-4 rounded-lg flex flex-col">
@@ -41,7 +42,7 @@
 
     <!-- Right Sidebar -->
     <div class="w-1/4 bg-gray-200 flex flex-col p-4">
-        <button class="bg-green-500 text-white p-2 rounded mb-2" onclick="startVoiceCall()">Start Voice Call</button>
+        <button id="startCallButton" class="bg-green-500 text-white p-2 rounded mb-2" onclick="startVideoCall()">Start Voice Call</button>
         <button class="bg-blue-500 text-white p-2 rounded mb-2" onclick="startVideoCall()">Start Video Call</button>
         <button class="bg-red-500 text-white p-2 rounded" onclick="startScreenShare()">Start Screen Share</button>
     </div>
