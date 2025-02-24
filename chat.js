@@ -139,10 +139,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 peerConnection = new RTCPeerConnection(config);
             }
             // Get the screen media stream (this captures the screen)
-            screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+            //screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
 
             // Add the screen stream to the WebRTC peer connection
-            screenStream.getTracks().forEach(track => peerConnection.addTrack(track, screenStream));
+            //screenStream.getTracks().forEach(track => peerConnection.addTrack(track, screenStream));
 
             // Send the screen stream offer to the other peer
             const offer = await peerConnection.createOffer();
