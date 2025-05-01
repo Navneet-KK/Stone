@@ -22,7 +22,7 @@
             <h3 class="text-white font-semibold">Music Bot</h3>
             <input type="text" id="songName" placeholder="Enter song name" class="mt-2 p-2 text-black rounded">
             <button class="mt-2 bg-white text-blue-700 px-4 py-2 rounded" onclick="playSong()">Play</button>
-        </div>
+        </div>       
     </div>
 
     <!-- Chat Section (Middle) -->
@@ -42,9 +42,10 @@
 
     <!-- Right Sidebar -->
     <div class="w-1/4 bg-gray-200 flex flex-col p-4">
-        <button  class="bg-green-500 text-white p-2 rounded mb-2" id="startCallButton">Start Voice Call</button>
-        <button class="bg-blue-500 text-white p-2 rounded mb-2" onclick="startVideoCall()">Start Video Call</button>
-        <button class="bg-red-500 text-white p-2 rounded" id="startScreenShare">Start Screen Share</button>
+        <button  class="bg-green-500 text-white p-2 rounded mb-2" id="startAudioCall">Start Voice Call</button>
+        <button class="bg-blue-500 text-white p-2 rounded mb-2" id="startVideoCall">Start Video Call</button>
+        <button class="bg-purple-500 text-white p-2 rounded mb-2" id="startScreenShare">Start Screen Share</button>
+        <button class="bg-red-500 text-white p-2 rounded" id="stopScreenShare">Stop Screen Share</button>
     </div>
 
 </body>
