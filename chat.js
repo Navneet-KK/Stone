@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
     let socket;
     let localStream;
-    let screenStream;  // Variable to hold the screen stream
+    let screenStream;
     let peerConnection;
     const config = {
         iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
@@ -9,47 +9,41 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Function to connect to the WebSocket server
     function connectWebSocket() {
-        socket = new WebSocket("wss://elycheon.onrender.com"); // WebSocket signaling server
+        socket = new WebSocket("wss://elycheon.onrender.com");
 
-        // Event: When connection is established
         socket.onopen = () => {
             console.log("Connected to WebSocket server.");
             document.getElementById("onlineStatus").style.color = "red"; // Red dot for online
         };
 
-        // Event: When receiving a message from the server
         socket.onmessage = async (event) => {
             const data = JSON.parse(event.data);
 
-            // Handle WebRTC signaling
             if (data.type === "offer") {
                 if (!peerConnection) {
                     peerConnection = new RTCPeerConnection(config);
                 }
-        
+
                 peerConnection.onicecandidate = (event) => {
                     if (event.candidate) {
                         socket.send(JSON.stringify({ type: "candidate", candidate: event.candidate }));
                     }
                 };
-        
+
                 peerConnection.ontrack = (event) => {
                     console.log("Received track:", event.track.kind);
-        
+
                     if (event.track.kind === "video") {
                         let videoElement = document.getElementById("remoteVideo");
-        
+
                         if (!videoElement) {
                             videoElement = document.createElement("video");
                             videoElement.id = "remoteVideo";
                             videoElement.autoplay = true;
                             videoElement.controls = true;
-                            //a = document.getElementById("startScreenShare");
-                            //document.body.innerHTML="";
                             document.body.appendChild(videoElement);
-                            //document.body.appendChild(a);
                         }
-        
+
                         videoElement.srcObject = event.streams[0];
                     } 
                     else if (event.track.kind === "audio") {
@@ -59,7 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         document.body.appendChild(audioElement);
                     }
                 };
-        
+
                 await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
                 const answer = await peerConnection.createAnswer();
                 await peerConnection.setLocalDescription(answer);
@@ -71,31 +65,28 @@ document.addEventListener("DOMContentLoaded", () => {
             else if (data.type === "candidate") {
                 await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
             }
-            // Handle chat message
             else if (data.type === "chat") {
                 displayMessage(data.message, "other");
             }
         };
 
-        // Event: When WebSocket connection closes
         socket.onclose = () => {
             console.log("Disconnected from WebSocket server.");
             document.getElementById("onlineStatus").style.color = "gray"; // Gray dot when disconnected
             setTimeout(connectWebSocket, 3000); // Attempt reconnection every 3 seconds
         };
 
-        // Event: When WebSocket connection has an error
         socket.onerror = (error) => {
             console.error("WebSocket error:", error);
-            socket.close(); // Close the connection so it triggers the onclose event
+            socket.close();
         };
     }
 
-    // Start voice call
-    async function startVoiceCall() {
+    // Start Audio Call
+    async function startAudioCall() {
         try {
-            // Get user microphone stream
-            console.log("Voice call clicked");
+            // Get user microphone stream (only audio)
+            console.log("Audio call clicked");
             localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
             // Create WebRTC peer connection
@@ -104,47 +95,95 @@ document.addEventListener("DOMContentLoaded", () => {
             // Add local audio stream to connection
             localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 
-            // When ICE candidates are available, send to the other peer
             peerConnection.onicecandidate = (event) => {
                 if (event.candidate) {
                     socket.send(JSON.stringify({ type: "candidate", candidate: event.candidate }));
                 }
             };
 
-            // When remote stream is received, play it
             peerConnection.ontrack = (event) => {
-                const audioElement = document.createElement("audio");
-                audioElement.srcObject = event.streams[0];
-                audioElement.autoplay = true;
-                document.body.appendChild(audioElement);
+                if (event.track.kind === "audio") {
+                    let audioElement = document.createElement("audio");
+                    audioElement.srcObject = event.streams[0];
+                    audioElement.autoplay = true;
+                    document.body.appendChild(audioElement);
+                }
             };
 
             // Create WebRTC offer
             const offer = await peerConnection.createOffer();
             await peerConnection.setLocalDescription(offer);
 
-            // Send offer to signaling server
             socket.send(JSON.stringify({ type: "offer", offer }));
-
         } catch (error) {
-            console.error("Error starting voice call:", error);
+            console.error("Error starting audio call:", error);
         }
     }
 
-    // Start screen sharing
+    // Start Video Call
+    async function startVideoCall() {
+        try {
+            // Get user video and microphone stream
+            console.log("Video call clicked");
+            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+
+            // Create WebRTC peer connection
+            peerConnection = new RTCPeerConnection(config);
+
+            // Add local video and audio stream to connection
+            localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+            peerConnection.onicecandidate = (event) => {
+                if (event.candidate) {
+                    socket.send(JSON.stringify({ type: "candidate", candidate: event.candidate }));
+                }
+            };
+
+            peerConnection.ontrack = (event) => {
+                if (event.track.kind === "video") {
+                    let videoElement = document.getElementById("remoteVideo");
+
+                    if (!videoElement) {
+                        videoElement = document.createElement("video");
+                        videoElement.id = "remoteVideo";
+                        videoElement.autoplay = true;
+                        videoElement.controls = true;
+                        document.body.appendChild(videoElement);
+                    }
+
+                    videoElement.srcObject = event.streams[0];
+                } else if (event.track.kind === "audio") {
+                    let audioElement = document.createElement("audio");
+                    audioElement.srcObject = event.streams[0];
+                    audioElement.autoplay = true;
+                    document.body.appendChild(audioElement);
+                }
+            };
+
+            // Create WebRTC offer
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
+
+            socket.send(JSON.stringify({ type: "offer", offer }));
+        } catch (error) {
+            console.error("Error starting video call:", error);
+        }
+    }
+
+    // Start Screen Share
     async function startScreenShare() {
         try {
-
             if (!peerConnection) {
                 peerConnection = new RTCPeerConnection(config);
             }
-            // Get the screen media stream (this captures the screen)
+
+            // Get the screen media stream
             screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
 
-            // Add the screen stream to the WebRTC peer connection
+            // Add the screen stream to WebRTC connection
             screenStream.getTracks().forEach(track => peerConnection.addTrack(track, screenStream));
 
-            // Send the screen stream offer to the other peer
+            // Send screen stream offer to the other peer
             const offer = await peerConnection.createOffer();
             await peerConnection.setLocalDescription(offer);
 
@@ -156,9 +195,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // Function to stop screen sharing (if needed)
+    // Function to stop screen sharing
     function stopScreenShare() {
-        // Stop all screen sharing tracks
         if (screenStream) {
             screenStream.getTracks().forEach(track => track.stop());
             console.log("Screen sharing stopped.");
@@ -191,7 +229,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // 🚀 Listen for Enter key in the input field
+    // Listen for Enter key in the input field
     messageInput.addEventListener("keydown", (event) => {
         if (event.key === "Enter") {
             event.preventDefault(); // Prevent new line in input field
@@ -199,11 +237,19 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Event listener for starting a voice call
-    const startCallButton = document.getElementById("startCallButton");
-    startCallButton.addEventListener("click", startVoiceCall);
+    // Event listener for starting an audio call
+    const startAudioCallButton = document.getElementById("startAudioCall");
+    startAudioCallButton.addEventListener("click", startAudioCall);
 
-    // Event listener for starting screen sharing.
-    const startScreenButton = document.getElementById("startScreenShare");
-    startScreenButton.addEventListener("click", startScreenShare);
+    // Event listener for starting a video call
+    const startVideoCallButton = document.getElementById("startVideoCall");
+    startVideoCallButton.addEventListener("click", startVideoCall);
+
+    // Event listener for starting screen sharing
+    const startScreenShareButton = document.getElementById("startScreenShare");
+    startScreenShareButton.addEventListener("click", startScreenShare);
+
+    // Event listener for stopping screen sharing
+    const stopScreenShareButton = document.getElementById("stopScreenShare");
+    stopScreenShareButton.addEventListener("click", stopScreenShare);
 });
